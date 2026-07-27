@@ -23,13 +23,9 @@ Durante la ingesta de datos en formato raw, se resolvieron los siguientes desaf�
 2. **Transformación de Tipos de Datos:** Conversión de columnas numéricas en formato texto con separadores de miles y comas a tipos `DECIMAL(15,2)` estandarizados.
 3. **Eliminación de Registros Duplicados:** Aplicación de un CTE analítico con `ROW_NUMBER()` para desduplicar la tabla sin perder integridad de información.
 
-```sql
-WITH CTE_Duplicados AS (
-    SELECT *,
-           ROW_NUMBER() OVER (
-               PARTITION BY anio, mes, activo, produccion_crudo 
-               ORDER BY (SELECT NULL)
-           ) AS rn
-    FROM datos
-)
-DELETE FROM CTE_Duplicados WHERE rn > 1;
+## 📊  2. Visualización Ejecutiva (Power BI)
+
+![Preview del Dashboard](./dashboard/dashboard_preview.png)
+
+* **Análisis de Tendencias:** Seguimiento mensual de producción con soporte para filtros por activo y año.
+* **Seguimiento de Operaciones:** Métricas consolidadas en barriles de crudo (BBL) y volumen de gas (SCF).

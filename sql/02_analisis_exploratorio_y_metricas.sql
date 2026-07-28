@@ -48,21 +48,32 @@ ORDER BY promedio_gas DESC;
 
 
 -- ----------------------------------------------------------------------------
--- 4. Cálculo de Ratio Gas-Petróleo (GOR) y Categorización de Activos
+-- 4. Cálculo del Ratio Gas-Petróleo (GOR) Estándar (SCF/BBL) y Categorización
+-- Nota: La fuente reporta Gas en MPC y Crudo en BPPM. Se multiplica por 1,000 
+-- para llevarlo a la unidad estándar SCF/BBL.
 -- ----------------------------------------------------------------------------
+WITH gor_calculado AS (
+    SELECT
+        activo,
+        SUM(produccion_crudo) AS total_crudo,
+        SUM(produccion_gas) AS total_gas,
+        ROUND((SUM(produccion_gas) * 1000) / NULLIF(SUM(produccion_crudo), 0), 4) AS gor
+    FROM datos
+    WHERE anio = 2023
+    GROUP BY activo
+)
 SELECT
     activo,
-    ROUND(SUM(produccion_crudo), 4) AS total_crudo,
-    ROUND(SUM(produccion_gas), 4) AS total_gas,
-    ROUND(SUM(produccion_gas) / NULLIF(SUM(produccion_crudo), 0), 4) AS gor,
+    ROUND(total_crudo, 4) AS total_crudo_bppm,
+    ROUND(total_gas, 4) AS total_gas_mpc,
+    gor AS gor_scf_bbl,
     CASE
-        WHEN SUM(produccion_gas) / NULLIF(SUM(produccion_crudo), 0) > 0.5 THEN 'Alto en Gas'
-        WHEN SUM(produccion_gas) / NULLIF(SUM(produccion_crudo), 0) BETWEEN 0.2 AND 0.5 THEN 'Balanceado'
+        WHEN gor > 500 THEN 'Alto en gas'
+        WHEN gor BETWEEN 200 AND 500 THEN 'Balanceado'
         ELSE 'Predominante Crudo'
     END AS categoria_gor
-FROM datos
-WHERE anio = 2023
-GROUP BY activo;
+FROM gor_calculado
+ORDER BY gor DESC;
 
 
 -- ----------------------------------------------------------------------------

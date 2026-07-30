@@ -31,6 +31,10 @@ Se requiere visibilidad sobre el rendimiento histórico de la producción hidroc
 
 ---
 
+<img width="1116" height="635" alt="dashboard_preview" src="https://github.com/user-attachments/assets/ad780def-de98-4f9a-8ebf-ed2b21c307ec" />
+
+---
+
 ## 📁 Estructura del Repositorio
 
 ```text

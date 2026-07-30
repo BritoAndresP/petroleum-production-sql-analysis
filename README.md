@@ -30,8 +30,11 @@ Se requiere visibilidad sobre el rendimiento histórico de la producción hidroc
 * **Visualización:** Power BI / Excel
 
 ---
+# 📊 Dashboard de Producción de Crudo y Gas
 
-<img width="1116" height="635" alt="dashboard_preview" src="https://github.com/user-attachments/assets/ad780def-de98-4f9a-8ebf-ed2b21c307ec" />
+> **Panel interactivo para el seguimiento operativo y monitoreo cualitativo de producción de hidrocarburos por activo.**
+
+<img width="1127" height="637" alt="dashboard_preview" src="https://github.com/user-attachments/assets/d9a4ac56-3a8e-4706-a888-7a7abe095ed0" />
 
 ---
 

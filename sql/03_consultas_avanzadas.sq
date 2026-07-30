@@ -1,64 +1,83 @@
--- ============================================================
--- Proyecto: Análisis de Producción Petrolera
--- Script: 02_consultas_avanzadas.sql
--- Objetivo: Consultas analíticas (MoM, Running Total, Ranking)
--- ============================================================
+-- ============================================================================
+-- PROYECTO: Análisis de Producción Petrolera
+-- ARCHIVO: 03_window_functions_y_tendencias.sql
+-- DESCRIPCIÓN: Consultas avanzadas con Window Functions (LAG, SUM OVER, DENSE_RANK)
+--              para análisis de series temporales (MoM, YTD y Rankings).
+-- ============================================================================
 
--- 1. Comparativa de Producción Mensual (MoM) con LAG()
-SELECT
-    anio,
-    mes,
-    activo,
-    produccion_crudo,
-    LAG(produccion_crudo, 1) OVER(
-        PARTITION BY activo 
-        ORDER BY anio ASC, mes ASC
-    ) AS produccion_mes_anterior,
-    produccion_crudo - LAG(produccion_crudo, 1) OVER(
-        PARTITION BY activo 
-        ORDER BY anio ASC, mes ASC
-    ) AS diferencia_mom
-FROM datos;
+USE petroleos_db; -- Cambia al nombre de tu base de datos
+GO
 
-
--- 2. Producción Acumulada Anual (Running Total / YTD)
-SELECT
-    anio,
-    mes,
-    activo,
-    produccion_crudo,
-    SUM(produccion_crudo) OVER(
-        PARTITION BY activo, anio 
-        ORDER BY mes ASC
-    ) AS crudo_acumulado_anio
-FROM datos;
-
-
--- 3. Ranking Top 3 de Activos por Año con DENSE_RANK()
-WITH suma_anual AS (
+-- ----------------------------------------------------------------------------
+-- 1. Variación Porcentual Mes a Mes (MoM) de Producción de Crudo
+-- ----------------------------------------------------------------------------
+WITH produccion_mensual AS (
     SELECT
-        anio,
         activo,
+        anio,
+        mes,
+        SUM(produccion_crudo) AS crudo_actual,
+        LAG(SUM(produccion_crudo), 1) OVER (
+            PARTITION BY activo 
+            ORDER BY anio, mes
+        ) AS crudo_mes_anterior
+    FROM datos
+    GROUP BY activo, anio, mes
+)
+SELECT
+    activo,
+    anio,
+    mes,
+    ROUND(crudo_actual, 2) AS crudo_actual_bppm,
+    ROUND(crudo_mes_anterior, 2) AS crudo_mes_anterior_bppm,
+    ROUND(crudo_actual - crudo_mes_anterior, 2) AS diferencia_abs,
+    ROUND(
+        ((crudo_actual - crudo_mes_anterior) / NULLIF(crudo_mes_anterior, 0)) * 100, 
+        2
+    ) AS variacion_porcentual_mom
+FROM produccion_mensual
+ORDER BY activo, anio, mes;
+
+
+-- ----------------------------------------------------------------------------
+-- 2. Acumulado Anual de Producción de Crudo (YTD) por Activo
+-- ----------------------------------------------------------------------------
+SELECT
+    activo,
+    anio,
+    mes,
+    ROUND(SUM(produccion_crudo), 2) AS crudo_mes_bppm,
+    ROUND(
+        SUM(SUM(produccion_crudo)) OVER (
+            PARTITION BY activo, anio 
+            ORDER BY mes 
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ), 
+        2
+    ) AS acumulado_ytd_bppm
+FROM datos
+GROUP BY activo, anio, mes
+ORDER BY activo, anio, mes;
+
+
+-- ----------------------------------------------------------------------------
+-- 3. Ranking de Activos por Volumen Total de Crudo en el Año
+-- ----------------------------------------------------------------------------
+WITH produccion_anual_activo AS (
+    SELECT
+        activo,
+        anio,
         SUM(produccion_crudo) AS total_crudo_anio
     FROM datos
-    GROUP BY anio, activo
-),
-ranking_activos AS (
-    SELECT
-        anio,
-        activo,
-        total_crudo_anio,
-        DENSE_RANK() OVER(
-            PARTITION BY anio 
-            ORDER BY total_crudo_anio DESC
-        ) AS posicion_ranking
-    FROM suma_anual
+    GROUP BY activo, anio
 )
-SELECT 
+SELECT
     anio,
-    posicion_ranking,
+    DENSE_RANK() OVER (
+        PARTITION BY anio 
+        ORDER BY total_crudo_anio DESC
+    ) AS ranking_nacional,
     activo,
-    total_crudo_anio
-FROM ranking_activos
-WHERE posicion_ranking <= 3
-ORDER BY anio ASC, posicion_ranking ASC;
+    ROUND(total_crudo_anio, 2) AS total_crudo_bppm
+FROM produccion_anual_activo
+ORDER BY anio ASC, ranking_nacional ASC;

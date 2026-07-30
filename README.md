@@ -45,6 +45,4 @@ Se requiere visibilidad sobre el rendimiento histórico de la producción hidroc
 │   ├── 01_limpieza_y_desduplicacion.sql       # Script de ingesta, tipado y desduplicación con CTE + ROW_NUMBER
 │   ├── 02_analisis_exploratorio_y_metricas.sql # Consultas de negocio, GOR, CASE WHEN y subconsultas escalares
 │   └── 03_window_functions_y_tendencias.sql    # Análisis MoM, YTD y rankings con Window Functions
-├── dashboard/
-│   └── dashboard_preview.png                  # Captura ejecutiva del tablero en Power BI
 └── README.md                                  # Documentación general del proyecto
